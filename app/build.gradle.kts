@@ -64,6 +64,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.converter.gson)
     implementation(libs.retrofit)
+    implementation(libs.logging.interceptor)
+    implementation(libs.coil.kt.coil.compose)
 
 
     testImplementation(libs.junit)
