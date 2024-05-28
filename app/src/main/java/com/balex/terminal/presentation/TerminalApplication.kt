@@ -1,7 +1,6 @@
 package com.balex.terminal.presentation
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.balex.terminal.di.ApplicationComponent
