@@ -1,4 +1,4 @@
-package com.balex.terminal.data
+package com.balex.terminal.data.network
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

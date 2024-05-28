@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("kotlin-parcelize")
+    id("kotlin-kapt")
 }
 
 android {
@@ -65,7 +67,9 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.retrofit)
     implementation(libs.logging.interceptor)
-    implementation(libs.coil.kt.coil.compose)
+
+    implementation(libs.dagger)
+    kapt (libs.dagger.compiler)
 
 
     testImplementation(libs.junit)

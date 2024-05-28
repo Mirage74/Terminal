@@ -1,12 +1,10 @@
-package com.balex.terminal.data
+package com.balex.terminal.data.model
 
-import androidx.compose.runtime.Immutable
 import com.google.gson.annotations.SerializedName
 import java.util.Calendar
 import java.util.Date
 
-@Immutable
-data class Bar(
+data class BarDto(
     @SerializedName("o") val open: Float,
     @SerializedName("c") val close: Float,
     @SerializedName("l") val low: Float,
@@ -17,7 +15,7 @@ data class Bar(
     val calendar: Calendar
         get() {
             return Calendar.getInstance().apply {
-                time = Date(this@Bar.time)
+                time = Date(this@BarDto.time)
             }
         }
 }
