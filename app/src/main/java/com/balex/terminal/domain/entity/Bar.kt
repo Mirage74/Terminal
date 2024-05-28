@@ -1,9 +1,11 @@
 package com.balex.terminal.domain.entity
 
+import android.os.Parcelable
 import androidx.compose.runtime.Immutable
+import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 
-
+@Parcelize
 @Immutable
 data class Bar(
     val open: Float,
@@ -11,4 +13,4 @@ data class Bar(
     val low: Float,
     val high: Float,
     val calendar: Calendar
-)
+): Parcelable
