@@ -40,7 +40,6 @@ class TerminalRepositoryImpl @Inject constructor(
             _quotesList.addAll(mapper.mapResponseToQuotes(apiService.loadBars().barList))
             isQuotesListNeedRefreshFlow.emit(Unit)
         }
-
         isQuotesListNeedRefreshFlow.collect {
             emit(quotesList)
         }

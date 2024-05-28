@@ -21,8 +21,7 @@ class MainActivity : ComponentActivity() {
                 val screenState = viewModel.state.collectAsState(TerminalScreenState.Initial)
                 when (val currentState = screenState.value) {
                     is TerminalScreenState.Content -> {
-                        QuotesScreen(currentState.barList)
-                        //Log.d("MainActivity", currentState.barList.toString())
+                        Terminal(bars = currentState.barList)
                     }
 
                     is TerminalScreenState.Loading -> {
