@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.TransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -27,16 +28,26 @@ fun Terminal(bars: List<Bar>) {
         mutableIntStateOf(100)
     }
 
-    var barWidth by remember {
-        mutableFloatStateOf(0f)
-    }
-
     var terminalWidth by remember {
         mutableFloatStateOf(0f)
     }
 
+    val barWidth by remember {
+        derivedStateOf {
+            terminalWidth / visibleBarsCount
+        }
+    }
+
     var scrolledBy by remember {
         mutableFloatStateOf(0f)
+    }
+
+    val visibleBars by remember {
+        derivedStateOf {
+            val startIndex = (scrolledBy / barWidth).roundToInt().coerceAtLeast(0)
+            val endIndex = startIndex + visibleBarsCount.coerceAtMost(bars.size - 1)
+            bars.subList(startIndex, endIndex)
+        }
     }
 
     val transformableState = TransformableState { zoomChange, panChange, _ ->
@@ -56,9 +67,8 @@ fun Terminal(bars: List<Bar>) {
             .transformable(transformableState)
     ) {
         terminalWidth = size.width
-        val max = bars.maxOf { it.high }
-        val min = bars.minOf { it.low }
-        barWidth = size.width / visibleBarsCount
+        val max = visibleBars.maxOf { it.high }
+        val min = visibleBars.minOf { it.low }
         val pxPerPoint = size.height / (max - min)
 
         translate(left = scrolledBy) {
