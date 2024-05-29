@@ -16,11 +16,26 @@ class MainActivity : ComponentActivity() {
         setContent {
             TerminalTheme {
                 val component = getApplicationComponent()
-                val viewModel: TerminalViewModel = viewModel(factory = component.getViewModelFactory())
+                val viewModel: TerminalViewModel =
+                    viewModel(factory = component.getViewModelFactory())
                 val screenState = viewModel.state.collectAsState(TerminalScreenState.Initial)
                 when (val currentState = screenState.value) {
                     is TerminalScreenState.Content -> {
                         Terminal(bars = currentState.barList)
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxSize()
+//                                .background(Color.White),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//
+//                                Terminal(
+//                                    modifier = Modifier
+//                                        .size(350.dp),
+//                                    bars = currentState.barList
+//                                )
+//
+//                        }
                     }
 
                     is TerminalScreenState.Loading -> {
