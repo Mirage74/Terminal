@@ -1,14 +1,13 @@
 package com.balex.terminal.data.repository
 
-import android.util.Log
 import com.balex.terminal.data.mapper.QuotesMapper
-import com.balex.terminal.data.network.ApiFactory
+import com.balex.terminal.data.model.QuotesAndFrame
 import com.balex.terminal.data.network.ApiService
-import com.balex.terminal.domain.entity.Bar
+import com.balex.terminal.domain.entity.TimeFrame
 import com.balex.terminal.domain.repository.TerminalRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,30 +22,55 @@ class TerminalRepositoryImpl @Inject constructor(
     private val mapper: QuotesMapper
 ): TerminalRepository {
 
+    private val coroutineScope = CoroutineScope(SupervisorJob())
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        Log.d("TerminalRepositoryImpl", "Exception caught: $throwable")
-    }
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    private val _quotesList = mutableListOf<Bar>()
-    private val quotesList: List<Bar>
-        get() = _quotesList.toList()
+        _quotesListAndFrame = _quotesListAndFrameLastState
+
+            coroutineScope.launch() {
+                isQuotesListNeedRefreshFlow.emit(Unit)
+            }
+    }
+
+
+    private var _quotesListAndFrameLastState = QuotesAndFrame()
+
+    private var _quotesListAndFrame = QuotesAndFrame(isLoading = true)
+    private val quotesListAndFrame: QuotesAndFrame
+        get() = QuotesAndFrame(_quotesListAndFrame.barList.toList(), _quotesListAndFrame.timeFrame, _quotesListAndFrame.isLoading)
 
     private val isQuotesListNeedRefreshFlow = MutableSharedFlow<Unit>(replay = 1)
 
 
-    override fun getQuotes(): StateFlow<List<Bar>> = flow {
+    override fun getQuotes(): StateFlow<QuotesAndFrame> = flow {
         coroutineScope.launch (exceptionHandler) {
-            _quotesList.addAll(mapper.mapResponseToQuotes(apiService.loadBars().barList))
+            val newQuotesAndFrame = QuotesAndFrame(mapper.mapResponseToQuotes(apiService.loadBars().barList), TIME_FRAME_DEFAULT)
+            _quotesListAndFrame = newQuotesAndFrame
             isQuotesListNeedRefreshFlow.emit(Unit)
         }
         isQuotesListNeedRefreshFlow.collect {
-            emit(quotesList)
+            emit(quotesListAndFrame)
         }
     }
         .stateIn(
             scope = coroutineScope,
             started = SharingStarted.Lazily,
-            initialValue = quotesList
+            initialValue = quotesListAndFrame
         )
+
+    override fun refreshQuotes(timeFrame: TimeFrame){
+        _quotesListAndFrameLastState = _quotesListAndFrame
+        coroutineScope.launch (exceptionHandler) {
+            _quotesListAndFrame = QuotesAndFrame(isLoading = true)
+            isQuotesListNeedRefreshFlow.emit(Unit)
+            val newQuotesAndFrame = QuotesAndFrame(mapper.mapResponseToQuotes(apiService.loadBars(timeFrame = timeFrame.value).barList), timeFrame)
+            _quotesListAndFrame = newQuotesAndFrame
+            isQuotesListNeedRefreshFlow.emit(Unit)
+        }
+    }
+
+    companion object {
+        private val TIME_FRAME_DEFAULT = TimeFrame.HOUR_1
+    }
+
 }

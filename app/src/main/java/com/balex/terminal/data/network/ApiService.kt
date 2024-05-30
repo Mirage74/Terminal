@@ -8,11 +8,10 @@ import retrofit2.http.Query
 interface ApiService {
 
 
-    @GET("aggs/ticker/{code}/range/{rangeNum}/{rangeName}/{dateFrom}/{dateTo}?adjusted=true")
+    @GET("aggs/ticker/{code}/range/{timeframe}/{dateFrom}/{dateTo}?adjusted=true")
     suspend fun loadBars(
         @Path("code") asset_code: String = ASSET_CODE,
-        @Path("rangeNum") rangeNum: Int = RANGE_NUM,
-        @Path("rangeName") rangeName: String = RANGE_NAME,
+        @Path("timeframe") timeFrame: String = TIME_FRAME,
         @Path("dateFrom") dateFrom: String = DATE_FROM,
         @Path("dateTo") dateTo: String = DATE_TO,
         @Query("sort") sort: String = SORT,
@@ -24,8 +23,7 @@ interface ApiService {
         const val ASSET_CODE = "AAPL"
         //const val ASSET_CODE = "TSLA"
         //const val ASSET_CODE = "C:EURUSD"
-        const val RANGE_NUM = 1
-        const val RANGE_NAME = "hour"
+        const val TIME_FRAME = "1/hour"
         const val DATE_FROM = "2022-01-09"
         const val DATE_TO = "2023-01-09"
         //const val SORT = "asc"

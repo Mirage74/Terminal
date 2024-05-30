@@ -1,24 +1,41 @@
 package com.balex.terminal.presentation.main
 
 import androidx.lifecycle.ViewModel
+import com.balex.terminal.domain.entity.TimeFrame
 import com.balex.terminal.domain.usecases.GetQuotesUseCase
+import com.balex.terminal.domain.usecases.RefreshQuotesUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class TerminalViewModel @Inject constructor(
-    getQuotesUseCase: GetQuotesUseCase
+    getQuotesUseCase: GetQuotesUseCase,
+    private val refreshQuotesUseCase: RefreshQuotesUseCase
 ): ViewModel() {
 
     private val quotesFlow = getQuotesUseCase()
 
+    fun refreshQuotes(timeFrame: TimeFrame) {
+        refreshQuotesUseCase(timeFrame)
+        }
 
 
     val state = quotesFlow
-        .filter { it.isNotEmpty() }
-        .map { TerminalScreenState.Content(barList = it) as TerminalScreenState }
-        .onStart { emit(TerminalScreenState.Loading) }
+        //.filter { it.barList.isNotEmpty() }
+        .map {
+            if (!it.isLoading) {
+                TerminalScreenState.Content(barList = it.barList, timeFrame = it.timeFrame) as TerminalScreenState
+            } else {
+                TerminalScreenState.Loading
+            }
 
+        }
+        .onStart {
+            emit(TerminalScreenState.Loading)
+        }
 
 }

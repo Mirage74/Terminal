@@ -1,6 +1,7 @@
 package com.balex.terminal.presentation.main
 
 import android.os.Parcelable
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -8,7 +9,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import com.balex.terminal.domain.entity.Bar
 import kotlinx.parcelize.Parcelize
 import kotlin.math.roundToInt
-
 @Parcelize
 data class TerminalState(
     val barList: List<Bar>,
@@ -17,10 +17,8 @@ data class TerminalState(
     val terminalHeight: Float = 1f,
     val scrolledBy: Float = 0f
 ) : Parcelable {
-
     val barWidth: Float
         get() = terminalWidth / visibleBarsCount
-
     private val visibleBars: List<Bar>
         get() {
             val startIndex = (scrolledBy / barWidth).roundToInt().coerceAtLeast(0)
@@ -34,10 +32,9 @@ data class TerminalState(
     val pxPerPoint: Float
         get() = terminalHeight / (max - min)
 }
-
 @Composable
 fun rememberTerminalState(bars: List<Bar>): MutableState<TerminalState> {
-    return rememberSaveable {
-        mutableStateOf(TerminalState(bars))
+    return rememberSaveable(bars.hashCode()) {
+        mutableStateOf(TerminalState(barList = bars))
     }
 }

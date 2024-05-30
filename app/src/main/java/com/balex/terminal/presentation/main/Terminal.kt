@@ -5,15 +5,19 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -23,6 +27,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -30,7 +35,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.balex.terminal.domain.entity.Bar
+import com.balex.terminal.R
+import com.balex.terminal.domain.entity.TimeFrame
 import com.balex.terminal.presentation.getApplicationComponent
 import com.balex.terminal.ui.theme.TerminalTheme
 import kotlin.math.roundToInt
@@ -50,11 +56,13 @@ fun Terminal(
         when (val currentState = screenState.value) {
             is TerminalScreenState.Content -> {
                 val terminalState = rememberTerminalState(bars = currentState.barList)
-
+//                Log.d("terminalState", "terminalState barList in Terminal ${terminalState.value.barList}")
+//                Log.d("terminalState", "terminalState barList size in Terminal ${terminalState.value.barList.size}")
                 Chart(
                     modifier = modifier,
                     terminalState = terminalState,
                     onTerminalStateChanged = {
+                        Log.d("terminalState", "2 $terminalState")
                         terminalState.value = it
                     }
                 )
@@ -66,6 +74,10 @@ fun Terminal(
                         lastPrice = it.close
                     )
                 }
+                TimeFrames(
+                    selectedFrame = currentState.timeFrame,
+                    onTimeFrameSelected = { viewModel.refreshQuotes(it) }
+                )
             }
 
             is TerminalScreenState.Loading -> {
@@ -84,9 +96,37 @@ fun Terminal(
             }
         }
     }
+}
 
-
-
+@Composable
+private fun TimeFrames(
+    selectedFrame: TimeFrame,
+    onTimeFrameSelected: (TimeFrame) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .wrapContentSize()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        TimeFrame.entries.forEach { timeFrame ->
+            val labelResId = when (timeFrame) {
+                TimeFrame.MIN_5 -> R.string.timeframe_5_minutes
+                TimeFrame.HOUR_1 -> R.string.timeframe_1_hour
+                TimeFrame.DAY_1 -> R.string.timeframe_1_day
+                TimeFrame.WEEK_1 -> R.string.timeframe_1_week
+            }
+            val isSelected = timeFrame == selectedFrame
+            AssistChip(
+                onClick = { onTimeFrameSelected(timeFrame) },
+                label = { Text(text = stringResource(id = labelResId)) },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = if (isSelected) Color.White else Color.Black,
+                    labelColor = if (isSelected) Color.Black else Color.White
+                )
+            )
+        }
+    }
 }
 
 @Composable
