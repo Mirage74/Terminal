@@ -1,7 +1,6 @@
 package com.balex.terminal.presentation.main
 
-import android.util.Log
-import android.view.View.OnClickListener
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -42,9 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.balex.terminal.R
+import com.balex.terminal.domain.entity.Bar
 import com.balex.terminal.domain.entity.TimeFrame
 import com.balex.terminal.presentation.getApplicationComponent
 import com.balex.terminal.ui.theme.TerminalTheme
+import java.util.Calendar
+import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val MIN_VISIBLE_BARS_COUNT = 20
@@ -62,15 +64,13 @@ fun Terminal(
         when (val currentState = screenState.value) {
             is TerminalScreenState.Content -> {
                 val terminalState = rememberTerminalState(bars = currentState.barList)
-//                Log.d("terminalState", "terminalState barList in Terminal ${terminalState.value.barList}")
-//                Log.d("terminalState", "terminalState barList size in Terminal ${terminalState.value.barList.size}")
                 Chart(
                     modifier = modifier,
                     terminalState = terminalState,
                     onTerminalStateChanged = {
-                        Log.d("terminalState", "2 $terminalState")
                         terminalState.value = it
-                    }
+                    },
+                    timeFrame = currentState.timeFrame
                 )
 
                 currentState.barList.firstOrNull()?.let {
@@ -145,7 +145,8 @@ private fun TimeFrames(
 private fun Chart(
     modifier: Modifier = Modifier,
     terminalState: State<TerminalState>,
-    onTerminalStateChanged: (TerminalState) -> Unit
+    onTerminalStateChanged: (TerminalState) -> Unit,
+    timeFrame: TimeFrame
 
 ) {
     val currentState = terminalState.value
@@ -164,6 +165,8 @@ private fun Chart(
             )
         )
     }
+
+    val textMeasurer = rememberTextMeasurer()
 
     Canvas(
         modifier = modifier
@@ -191,6 +194,17 @@ private fun Chart(
         translate(left = currentState.scrolledBy) {
             currentState.barList.forEachIndexed { index, bar ->
                 val offsetX = size.width - index * currentState.barWidth
+                drawTimeDelimiter(
+                    bar = bar,
+                    nextBar = if (index < currentState.barList.size - 1) {
+                        currentState.barList[index + 1]
+                    } else {
+                        null
+                    },
+                    timeFrame = timeFrame,
+                    offsetX = offsetX,
+                    textMeasurer = textMeasurer
+                )
                 drawLine(
                     color = Color.White,
                     start = Offset(offsetX, size.height - (bar.low - min) * pxPerPoint),
@@ -265,6 +279,76 @@ private fun ErrorScreen(
     }
 }
 
+
+@SuppressLint("DefaultLocale")
+private fun DrawScope.drawTimeDelimiter(
+    bar: Bar,
+    nextBar: Bar?,
+    timeFrame: TimeFrame,
+    offsetX: Float,
+    textMeasurer: TextMeasurer
+) {
+    val calendar = bar.calendar
+
+    val minutes = calendar.get(Calendar.MINUTE)
+    val hours = calendar.get(Calendar.HOUR_OF_DAY)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    val month = calendar.get(Calendar.MONTH)
+
+    val shouldDrawDelimiter = when (timeFrame) {
+        TimeFrame.MIN_5 -> {
+            minutes == 0
+        }
+
+        TimeFrame.HOUR_1 -> {
+            val nextBarDay = nextBar?.calendar?.get(Calendar.DAY_OF_MONTH)
+            (day != nextBarDay) && (day % 5 == 0)
+        }
+
+        TimeFrame.DAY_1 -> {
+            day == 15 || day == 30
+        }
+
+        TimeFrame.WEEK_1 -> {
+            val nextBarMonth = nextBar?.calendar?.get(Calendar.MONTH)
+            month != nextBarMonth
+        }
+    }
+    if (!shouldDrawDelimiter) return
+
+    drawLine(
+        color = Color.White.copy(alpha = 0.5f),
+        start = Offset(offsetX, 0f),
+        end = Offset(offsetX, size.height),
+        strokeWidth = 1f,
+        pathEffect = PathEffect.dashPathEffect(
+            intervals = floatArrayOf(4.dp.toPx(), 4.dp.toPx())
+        )
+    )
+
+    val nameOfMonth = calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
+    val text = when (timeFrame) {
+        TimeFrame.MIN_5 -> {
+            String.format("%02d:00", hours)
+        }
+
+        TimeFrame.HOUR_1, TimeFrame.DAY_1, TimeFrame.WEEK_1 -> {
+            String.format("%s %s", day, nameOfMonth)
+        }
+
+    }
+    val textLayoutResult = textMeasurer.measure(
+        text = text,
+        style = TextStyle(
+            color = Color.White,
+            fontSize = 12.sp
+        )
+    )
+    drawText(
+        textLayoutResult = textLayoutResult,
+        topLeft = Offset(offsetX - textLayoutResult.size.width / 2, size.height)
+    )
+}
 
 private fun DrawScope.drawPrices(
     max: Float,
