@@ -15,23 +15,31 @@ import javax.inject.Inject
 class TerminalViewModel @Inject constructor(
     getQuotesUseCase: GetQuotesUseCase,
     private val refreshQuotesUseCase: RefreshQuotesUseCase
-): ViewModel() {
+) : ViewModel() {
 
     private val quotesFlow = getQuotesUseCase()
 
     fun refreshQuotes(timeFrame: TimeFrame) {
         refreshQuotesUseCase(timeFrame)
-        }
+    }
 
 
     val state = quotesFlow
         //.filter { it.barList.isNotEmpty() }
         .map {
-            if (!it.isLoading) {
-                TerminalScreenState.Content(barList = it.barList, timeFrame = it.timeFrame) as TerminalScreenState
+            if (it.isErrorInitialLoading) {
+                TerminalScreenState.Error
             } else {
-                TerminalScreenState.Loading
+                if (!it.isLoading) {
+                    TerminalScreenState.Content(
+                        barList = it.barList,
+                        timeFrame = it.timeFrame
+                    ) as TerminalScreenState
+                } else {
+                    TerminalScreenState.Loading
+                }
             }
+
 
         }
         .onStart {

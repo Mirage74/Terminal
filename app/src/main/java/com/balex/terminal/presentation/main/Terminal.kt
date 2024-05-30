@@ -1,18 +1,24 @@
 package com.balex.terminal.presentation.main
 
 import android.util.Log
+import android.view.View.OnClickListener
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -89,6 +95,12 @@ fun Terminal(
                 ) {
                     CircularProgressIndicator()
                 }
+            }
+
+            is TerminalScreenState.Error -> {
+                ErrorScreen(
+                    onRefreshButtonClickListener =  { viewModel.refreshQuotes(TIME_FRAME_DEFAULT) }
+                )
             }
 
             is TerminalScreenState.Initial -> {
@@ -218,7 +230,39 @@ private fun Prices(
 
         drawPrices(max, min, pxPerPoint, lastPrice, textMeasurer)
     }
+}
 
+@Composable
+private fun ErrorScreen(
+    onRefreshButtonClickListener: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.wrapContentHeight(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Error loading data",
+                fontSize = 30.sp,
+                color = Color.Red
+            )
+            Spacer(modifier = Modifier.height(100.dp))
+            Text(
+                text = "Please check internet connection",
+                fontSize = 30.sp
+            )
+            Spacer(modifier = Modifier.height(100.dp))
+            Button(onClick = { onRefreshButtonClickListener() })
+            {
+                    Text(text = "Refresh")
+                }
+
+        }
+    }
 }
 
 
@@ -302,4 +346,7 @@ private fun DrawScope.drawDashedLine(
             )
         )
     )
+
 }
+
+private val TIME_FRAME_DEFAULT = TimeFrame.HOUR_1

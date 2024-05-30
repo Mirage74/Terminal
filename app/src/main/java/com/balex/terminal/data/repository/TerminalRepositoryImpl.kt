@@ -25,8 +25,11 @@ class TerminalRepositoryImpl @Inject constructor(
     private val coroutineScope = CoroutineScope(SupervisorJob())
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
 
-        _quotesListAndFrame = _quotesListAndFrameLastState
-
+        if (_quotesListAndFrameLastState.barList.isEmpty()) {
+            _quotesListAndFrame = QuotesAndFrame(isErrorInitialLoading = true)
+        } else {
+            _quotesListAndFrame = _quotesListAndFrameLastState
+        }
             coroutineScope.launch() {
                 isQuotesListNeedRefreshFlow.emit(Unit)
             }
@@ -37,7 +40,12 @@ class TerminalRepositoryImpl @Inject constructor(
 
     private var _quotesListAndFrame = QuotesAndFrame(isLoading = true)
     private val quotesListAndFrame: QuotesAndFrame
-        get() = QuotesAndFrame(_quotesListAndFrame.barList.toList(), _quotesListAndFrame.timeFrame, _quotesListAndFrame.isLoading)
+        get() = QuotesAndFrame(
+            _quotesListAndFrame.barList.toList(),
+            _quotesListAndFrame.timeFrame,
+            _quotesListAndFrame.isLoading,
+            _quotesListAndFrame.isErrorInitialLoading
+        )
 
     private val isQuotesListNeedRefreshFlow = MutableSharedFlow<Unit>(replay = 1)
 
@@ -63,7 +71,10 @@ class TerminalRepositoryImpl @Inject constructor(
         coroutineScope.launch (exceptionHandler) {
             _quotesListAndFrame = QuotesAndFrame(isLoading = true)
             isQuotesListNeedRefreshFlow.emit(Unit)
-            val newQuotesAndFrame = QuotesAndFrame(mapper.mapResponseToQuotes(apiService.loadBars(timeFrame = timeFrame.value).barList), timeFrame)
+            val newQuotesAndFrame = QuotesAndFrame(
+                mapper.mapResponseToQuotes(apiService.loadBars(timeFrame = timeFrame.value).barList),
+                timeFrame
+            )
             _quotesListAndFrame = newQuotesAndFrame
             isQuotesListNeedRefreshFlow.emit(Unit)
         }

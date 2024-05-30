@@ -7,5 +7,6 @@ import java.util.Collections
 data class QuotesAndFrame (
     val barList: List<Bar> = Collections.emptyList(),
     val timeFrame: TimeFrame = TimeFrame.HOUR_1,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val isErrorInitialLoading: Boolean = false
 )
