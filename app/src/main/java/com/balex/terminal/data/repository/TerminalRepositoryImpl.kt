@@ -30,9 +30,10 @@ class TerminalRepositoryImpl @Inject constructor(
         } else {
             _quotesListAndFrame = _quotesListAndFrameLastState
         }
-            coroutineScope.launch() {
-                isQuotesListNeedRefreshFlow.emit(Unit)
-            }
+        isQuotesListNeedRefreshFlow.tryEmit(Unit)
+//            coroutineScope.launch() {
+//                isQuotesListNeedRefreshFlow.emit(Unit)
+//            }
     }
 
 

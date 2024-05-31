@@ -32,11 +32,14 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -63,7 +66,9 @@ fun Terminal(
         val screenState = viewModel.state.collectAsState(TerminalScreenState.Initial)
         when (val currentState = screenState.value) {
             is TerminalScreenState.Content -> {
-                val terminalState = rememberTerminalState(bars = currentState.barList)
+                val currentWidth = LocalConfiguration.current.screenWidthDp * LocalDensity.current.density
+                val currentHeight = LocalConfiguration.current.screenHeightDp * LocalDensity.current.density
+                val terminalState = rememberTerminalState(bars = currentState.barList, currentWidth, currentHeight)
                 Chart(
                     modifier = modifier,
                     terminalState = terminalState,
@@ -157,7 +162,6 @@ private fun Chart(
         val scrolledBy = (currentState.scrolledBy + panChange.x)
             .coerceAtLeast(0f)
             .coerceAtMost(currentState.barList.size * currentState.barWidth - currentState.terminalWidth)
-
         onTerminalStateChanged(
             currentState.copy(
                 visibleBarsCount = visibleBarsCount,
@@ -191,32 +195,41 @@ private fun Chart(
         val min = currentState.min
         val pxPerPoint = currentState.pxPerPoint
 
+
+
         translate(left = currentState.scrolledBy) {
+
+
+
             currentState.barList.forEachIndexed { index, bar ->
                 val offsetX = size.width - index * currentState.barWidth
-                drawTimeDelimiter(
-                    bar = bar,
-                    nextBar = if (index < currentState.barList.size - 1) {
-                        currentState.barList[index + 1]
-                    } else {
-                        null
-                    },
-                    timeFrame = timeFrame,
-                    offsetX = offsetX,
-                    textMeasurer = textMeasurer
-                )
-                drawLine(
-                    color = Color.White,
-                    start = Offset(offsetX, size.height - (bar.low - min) * pxPerPoint),
-                    end = Offset(offsetX, size.height - (bar.high - min) * pxPerPoint),
-                    strokeWidth = 1f
-                )
-                drawLine(
-                    color = if (bar.open < bar.close) Color.Green else Color.Red,
-                    start = Offset(offsetX, size.height - (bar.open - min) * pxPerPoint),
-                    end = Offset(offsetX, size.height - (bar.close - min) * pxPerPoint),
-                    strokeWidth = currentState.barWidth / 2
-                )
+
+                    drawLine(
+                        color = Color.White,
+                        start = Offset(offsetX, size.height - (bar.low - min) * pxPerPoint),
+                        end = Offset(offsetX, size.height - (bar.high - min) * pxPerPoint),
+                        strokeWidth = 1f
+                    )
+                    drawLine(
+                        color = if (bar.open < bar.close) Color.Green else Color.Red,
+                        start = Offset(offsetX, size.height - (bar.open - min) * pxPerPoint),
+                        end = Offset(offsetX, size.height - (bar.close - min) * pxPerPoint),
+                        strokeWidth = currentState.barWidth / 2
+                    )
+
+
+                    drawTimeDelimiter(
+                        bar = bar,
+                        nextBar = if (index < currentState.barList.size - 1) {
+                            currentState.barList[index + 1]
+                        } else {
+                            null
+                        },
+                        timeFrame = timeFrame,
+                        offsetX = offsetX,
+                        textMeasurer = textMeasurer
+                    )
+
             }
         }
     }
@@ -430,7 +443,12 @@ private fun DrawScope.drawDashedLine(
             )
         )
     )
+}
 
+@Composable
+fun DpToPx(dp: Dp): Float {
+    val density = LocalDensity.current
+    return with(density) { dp.toPx() }
 }
 
 private val TIME_FRAME_DEFAULT = TimeFrame.HOUR_1

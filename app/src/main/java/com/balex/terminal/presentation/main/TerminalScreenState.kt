@@ -13,4 +13,5 @@ sealed class TerminalScreenState {
     data object Error : TerminalScreenState()
 
     data class Content(val barList: List<Bar>, val timeFrame: TimeFrame) : TerminalScreenState()
+
 }
